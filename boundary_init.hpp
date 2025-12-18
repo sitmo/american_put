@@ -23,15 +23,18 @@
 // American put option using the QD+ (quadratic dividend) method.
 // -----------------------------------------------------------------------------
 
-/// Computes initial early exercise boundary estimate using QD+ method
-/// @param K Strike price
-/// @param sigma Volatility
-/// @param r Risk-free rate
-/// @param q Dividend yield
-/// @param t Time to expiration
-/// @param tol Convergence tolerance
-/// @param max_steps Maximum number of iterations
-/// @return Estimated early exercise boundary
+/// Computes initial early exercise boundary estimate using QD+ method.
+///
+/// **Parameters:**
+/// - `K`: Strike price
+/// - `sigma`: Volatility
+/// - `r`: Risk-free rate
+/// - `q`: Dividend yield
+/// - `t`: Time to expiration
+/// - `tol`: Convergence tolerance (default: 1E-6)
+/// - `max_steps`: Maximum number of iterations (default: 10)
+///
+/// **Returns:** Estimated early exercise boundary
 template<typename Real>
 Real compute_initial_early_exercise_boundary(Real K, Real sigma, Real r, Real q, Real t,
                                             Real tol = 1E-6, unsigned max_steps = 10) {

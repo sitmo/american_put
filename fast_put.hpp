@@ -23,15 +23,22 @@
 #include <chrono>
 #include <cstdint>
 
-// -------------------------------
-// Main pricer (Chebyshev/boundary arrays are now compile-time std::array)
-// -------------------------------
-template <typename Real>
-class AloPut {
+// -----------------------------------------------------------------------------
+// Fast American Put Pricer
+//
+// **Template Parameters:**
+// - `Real`: Floating point type (e.g., double, float)
+// - `NumChebyshevNodes`: Number of Chebyshev nodes for boundary representation
+// - `NumQuadNodesFP`: Number of quadrature nodes for fixed-point iteration
+// - `NumQuadNodesPrice`: Number of quadrature nodes for price computation
+// -----------------------------------------------------------------------------
+template <typename Real, size_t NumChebyshevNodes, size_t NumQuadNodesFP, size_t NumQuadNodesPrice>
+class FastPut {
 public:
-    static constexpr size_t NC = size_t(CHEBYSHEV_NODES) + 1;
+    static constexpr size_t NC = NumChebyshevNodes + 1;
 
     Real S, K, sigma, r, q, T;
+    int fixed_point_iterations;  // Runtime parameter for fixed-point iterations
 
     std::array<Real, NC> zv{}; // Chebyshev nodes [-1,1]
     std::array<Real, NC> xv{}; // rescaled [0,sqrt(T)]
@@ -41,13 +48,23 @@ public:
     std::array<Real, NC> av{}; // Chebyshev coeffs
     std::array<Real, NC> bv{}; // Clenshaw temp
 
+    // Quadrature rules (generated at construction)
+    QuadratureRule<NumQuadNodesFP, Real> fixed_point_quadrature_rule;
+    QuadratureRule<NumQuadNodesPrice, Real> price_quadrature_rule;
+    TimeTransformationCoefficients<NumQuadNodesFP, Real> fixed_point_time_coeffs;
+    TimeTransformationCoefficients<NumQuadNodesPrice, Real> price_time_coeffs;
+
     // cached constants
     Real sqrtT, inv_sqrtT;
     Real logK, log_max, log_min;
     Real sig2;
 
-    AloPut(Real S, Real K, Real sigma, Real r, Real q, Real T)
-        : S(S), K(K), sigma(sigma), r(r), q(q), T(T)
+    FastPut(Real S, Real K, Real sigma, Real r, Real q, Real T, int fixed_point_iterations = 2)
+        : S(S), K(K), sigma(sigma), r(r), q(q), T(T), fixed_point_iterations(fixed_point_iterations),
+          fixed_point_quadrature_rule(generate_tanh_sinh_quadrature<NumQuadNodesFP, Real>(Real(3.3))),
+          price_quadrature_rule(generate_tanh_sinh_quadrature<NumQuadNodesPrice, Real>(Real(3.5))),
+          fixed_point_time_coeffs(precompute_time_transformation(fixed_point_quadrature_rule)),
+          price_time_coeffs(precompute_time_transformation(price_quadrature_rule))
     {
         sqrtT     = std::sqrt(T);
         inv_sqrtT = Real(1) / sqrtT;
@@ -63,7 +80,7 @@ public:
 
     void initChebyshev() {
         const Real x_factor = Real(0.5) * sqrtT;
-        const Real pi_over_n = Real(PI) / Real(CHEBYSHEV_NODES);
+        const Real pi_over_n = Real(PI) / Real(NumChebyshevNodes);
 
         for (size_t i = 0; i < NC; ++i) {
             zv[i] = std::cos(pi_over_n * Real(i));
@@ -115,7 +132,7 @@ public:
     }
 
     inline void initChebyshevInterpolation() {
-        constexpr uint32_t n = uint32_t(CHEBYSHEV_NODES);
+        constexpr uint32_t n = uint32_t(NumChebyshevNodes);
         const Real c = Real(2) / Real(n);
         const uint32_t two_n = 2 * n;
 
@@ -134,7 +151,7 @@ public:
     }
 
     inline Real q_c(Real z) {
-        constexpr uint32_t n = uint32_t(CHEBYSHEV_NODES);
+        constexpr uint32_t n = uint32_t(NumChebyshevNodes);
         bv[n] = Real(0.5) * av[n];
         bv[n - 1] = av[n - 1] + Real(2) * z * bv[n];
         for (int32_t k = int32_t(n) - 2; k >= 0; --k) {
@@ -167,7 +184,7 @@ public:
         Real Nint = Real(0);
         Real Dint = Real(0);
 
-        for (size_t i = 0; i < QUAD_NODES_FP; ++i) {
+        for (size_t i = 0; i < NumQuadNodesFP; ++i) {
             const Real u = fixed_point_time_coeffs.alpha[i] * t;
             const Real sqrt_u = fixed_point_time_coeffs.sqrt_alpha[i] * sqrt_t;
 
@@ -199,7 +216,7 @@ public:
         const Real sqrt_t = std::sqrt(t);
         Real ans = Real(0);
 
-        for (size_t i = 0; i < QUAD_NODES_PRICE; ++i) {
+        for (size_t i = 0; i < NumQuadNodesPrice; ++i) {
             const Real u = price_time_coeffs.alpha[i] * t;
             const Real sqrt_u = price_time_coeffs.sqrt_alpha[i] * sqrt_t;
 
@@ -221,7 +238,7 @@ public:
         return ans * t * Real(0.5);
     }
 
-    Real Main(int m) {
+    Real calc() {
         auto t1 = std::chrono::high_resolution_clock::now();
 
         initalGuessB();
@@ -230,7 +247,7 @@ public:
 
         Real veur = compute_european_put_price(S, K, sigma, r, q, T);
 
-        for (int ww = 0; ww < m; ++ww) {
+        for (int ww = 0; ww < fixed_point_iterations; ++ww) {
             for (size_t i = 0; i + 1 < NC; ++i) {
                 Bv[i] = FixedPoint_B_StepOrdinary(tv[i]);
             }
@@ -247,10 +264,10 @@ public:
         std::cout << std::fixed;
 
         std::cout << "{\n"
-            << "\t\"l_FixedPointQuadNodes\": " << QUAD_NODES_FP << ",\n"
-            << "\t\"m_FixedPointIter\": " << m << ",\n"
-            << "\t\"n_ChebyshevNodes\": " << CHEBYSHEV_NODES << ",\n"
-            << "\t\"p_PriceQuadNodes\": " << QUAD_NODES_PRICE << ",\n"
+            << "\t\"l_FixedPointQuadNodes\": " << NumQuadNodesFP << ",\n"
+            << "\t\"m_FixedPointIter\": " << fixed_point_iterations << ",\n"
+            << "\t\"n_ChebyshevNodes\": " << NumChebyshevNodes << ",\n"
+            << "\t\"p_PriceQuadNodes\": " << NumQuadNodesPrice << ",\n"
             << "\t\"S\": " << S << ",\n"
             << "\t\"K\": " << K << ",\n"
             << "\t\"T\": " << T << ",\n";

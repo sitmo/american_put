@@ -21,10 +21,13 @@
 // the tanh-sinh (double exponential) method. The nodes are in [-1, 1].
 // -----------------------------------------------------------------------------
 
-/// Computes a single tanh-sinh quadrature node and weight pair
-/// @param step_size Step size in the transformed domain
-/// @param transformed_index Index in the transformed domain
-/// @return Pair of (node_location, weight)
+/// Computes a single tanh-sinh quadrature node and weight pair.
+///
+/// **Parameters:**
+/// - `step_size`: Step size in the transformed domain
+/// - `transformed_index`: Index in the transformed domain
+///
+/// **Returns:** A pair containing (node_location, weight)
 template<typename Real>
 inline std::pair<Real, Real> compute_tanh_sinh_node_and_weight(Real step_size, Real transformed_index) {
     const Real half_pi = Real(HALF_PI);
@@ -36,16 +39,21 @@ inline std::pair<Real, Real> compute_tanh_sinh_node_and_weight(Real step_size, R
     return {node_location, weight};
 }
 
-/// Container for quadrature nodes and weights
+/// Container for quadrature nodes and weights.
+///
+/// Stores the node locations and corresponding weights for numerical integration.
 template<size_t N, typename Real = RealType>
 struct QuadratureRule {
     std::array<Real, N> nodes{};      // Quadrature node locations in [-1, 1]
     std::array<Real, N> weights{};    // Corresponding weights
 };
 
-/// Generates a tanh-sinh quadrature rule with N nodes
-/// @param truncation_parameter Controls the range of integration (typically 3.0-3.5)
-/// @return Quadrature rule with nodes in [-1, 1] and corresponding weights
+/// Generates a tanh-sinh quadrature rule with N nodes.
+///
+/// **Parameters:**
+/// - `truncation_parameter`: Controls the range of integration (typically 3.0-3.5)
+///
+/// **Returns:** Quadrature rule with nodes in [-1, 1] and corresponding weights
 template<size_t N, typename Real = RealType>
 inline QuadratureRule<N, Real> generate_tanh_sinh_quadrature(Real truncation_parameter) {
     QuadratureRule<N, Real> rule{};
@@ -74,7 +82,9 @@ inline QuadratureRule<N, Real> generate_tanh_sinh_quadrature(Real truncation_par
 // where alpha = 0.5 * (1 + node) maps [-1, 1] to [0, 1]
 // -----------------------------------------------------------------------------
 
-/// Precomputed time transformation coefficients for efficient integration
+/// Precomputed time transformation coefficients for efficient integration.
+///
+/// Stores coefficients that transform quadrature nodes from [-1, 1] to [0, t] time points.
 template<size_t N, typename Real>
 struct TimeTransformationCoefficients {
     std::array<Real, N> alpha{};           // Maps node to [0, 1]: u = alpha[i] * t
@@ -83,8 +93,14 @@ struct TimeTransformationCoefficients {
     std::array<Real, N> sqrt_beta{};       // Precomputed sqrt(beta[i])
 };
 
-/// Precomputes time transformation coefficients from a quadrature rule
-/// This allows efficient transformation from [-1, 1] nodes to [0, t] time points
+/// Precomputes time transformation coefficients from a quadrature rule.
+///
+/// This allows efficient transformation from [-1, 1] nodes to [0, t] time points.
+///
+/// **Parameters:**
+/// - `rule`: The quadrature rule to transform
+///
+/// **Returns:** Time transformation coefficients with precomputed alpha, beta, and their square roots
 template<size_t N, typename Real>
 inline TimeTransformationCoefficients<N, Real> 
 precompute_time_transformation(const QuadratureRule<N, Real>& rule) {

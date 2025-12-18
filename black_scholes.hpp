@@ -18,14 +18,17 @@
 // Black-Scholes European Put Option Pricing
 // -----------------------------------------------------------------------------
 
-/// Computes the price of a European put option using the Black-Scholes formula
-/// @param S Current stock price
-/// @param K Strike price
-/// @param sigma Volatility
-/// @param r Risk-free rate
-/// @param q Dividend yield
-/// @param t Time to expiration
-/// @return European put option price
+/// Computes the price of a European put option using the Black-Scholes formula.
+///
+/// **Parameters:**
+/// - `S`: Current stock price
+/// - `K`: Strike price
+/// - `sigma`: Volatility
+/// - `r`: Risk-free rate
+/// - `q`: Dividend yield
+/// - `t`: Time to expiration
+///
+/// **Returns:** European put option price
 template <typename Real>
 inline Real compute_european_put_price(Real S, Real K, Real sigma, Real r, Real q, Real t) {
     if (t <= Real(0)) {
@@ -45,15 +48,17 @@ inline Real compute_european_put_price(Real S, Real K, Real sigma, Real r, Real 
     return N_d2 * K * e_rt - N_d1 * S * e_qt;
 }
 
-/// Computes the price and theta (time derivative) of a European put option
-/// @param S Current stock price
-/// @param K Strike price
-/// @param sigma Volatility
-/// @param r Risk-free rate
-/// @param q Dividend yield
-/// @param t Time to expiration
-/// @param[out] price European put option price
-/// @param[out] theta Time derivative of the option price (dP/dt)
+/// Computes the price and theta (time derivative) of a European put option.
+///
+/// **Parameters:**
+/// - `S`: Current stock price
+/// - `K`: Strike price
+/// - `sigma`: Volatility
+/// - `r`: Risk-free rate
+/// - `q`: Dividend yield
+/// - `t`: Time to expiration
+/// - `price`: (output) European put option price
+/// - `theta`: (output) Time derivative of the option price (dP/dt)
 template <typename Real>
 inline void compute_european_put_price_and_theta(Real S, Real K, Real sigma, Real r, Real q, Real t,
                                                  Real& price, Real& theta) {

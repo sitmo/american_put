@@ -3,8 +3,8 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -march=native
 
 
 
-TARGET2 = americanput
-SOURCE2 = americanput.cpp
+TARGET2 = test_fast_put
+SOURCE2 = test_fast_put.cpp
 TARGET3 = americanput_tree
 SOURCE3 = americanput_tree.cpp
 

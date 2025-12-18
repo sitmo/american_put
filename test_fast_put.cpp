@@ -35,7 +35,7 @@
 //   => QUAD_NODES_FP=15, FIXED_POINT_ITER=3, CHEBYSHEV_NODES=7, QUAD_NODES_PRICE=41
 // -----------------------------------------------------------------------------
 
-#include "alo_put.hpp"
+#include "fast_put.hpp"
 #include <cstdlib>
 #include <cstring>
 
@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
     RealType sigma = 0.25;
     RealType r = 0.05;
     RealType q = 0.05;
+    int fixed_point_iterations = FIXED_POINT_ITER;  // Default from constants
 
     int arg_pairs = (argc - 1) / 2;
     for (int i = 0; i < arg_pairs; ++i) {
@@ -61,10 +62,12 @@ int main(int argc, char *argv[]) {
         if (std::strcmp(key, "sigma") == 0) sigma = std::strtod(val, nullptr);
         if (std::strcmp(key, "r") == 0)     r = std::strtod(val, nullptr);
         if (std::strcmp(key, "q") == 0)     q = std::strtod(val, nullptr);
-
+        if (std::strcmp(key, "m") == 0)    fixed_point_iterations = std::atoi(val);
     }
 
-    AloPut<RealType> put(S, K, sigma, r, q, T);
-    RealType ans = put.Main(FIXED_POINT_ITER);
+    FastPut<RealType, CHEBYSHEV_NODES, QUAD_NODES_FP, QUAD_NODES_PRICE> 
+        put(S, K, sigma, r, q, T, fixed_point_iterations);
+    RealType ans = put.calc();
     return 0;
 }
+
