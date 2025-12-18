@@ -28,46 +28,6 @@ policies are passed as template parameters, while traits are global classes
 #include <chrono>
 #include <type_traits>
 
-/*
-double normal_cdf(double x)
-{
-    double cdf;
-    double poly;
-
-    double xabs = std::abs(x);
-    if (xabs > 37.0) 
-        cdf = 0.0;
-    else {  
-        double exponential = exp( -xabs*xabs / 2.0);
-        if (xabs < 7.07106781186547) { 
-            poly = 3.52624965998911E-02 * xabs + 0.700383064443688;
-            poly = poly * xabs + 6.37396220353165;
-            poly = poly * xabs + 33.912866078383;
-            poly = poly * xabs + 112.079291497871;
-            poly = poly * xabs + 221.213596169931;
-            poly = poly * xabs + 220.206867912376;
-            cdf = exponential * poly;
-            poly = 8.83883476483184E-02 * xabs + 1.75566716318264;
-            poly = poly * xabs + 16.064177579207;
-            poly = poly * xabs + 86.7807322029461;
-            poly = poly * xabs + 296.564248779674;
-            poly = poly * xabs + 637.333633378831;
-            poly = poly * xabs + 793.826512519948;
-            poly = poly * xabs + 440.413735824752;
-            cdf = cdf / poly;
-        } else {
-            poly = xabs + 0.65;
-            poly = xabs + 4 / poly;
-            poly = xabs + 3 / poly;
-            poly = xabs + 2 / poly;
-            poly = xabs + 1 / poly;
-            cdf = exponential / poly / 2.506628274631;
-        }
-    }
-    if (x>0) cdf = 1.0 - cdf;
-    return cdf;
-}
-*/
 
 template<typename T>
 void print(std::vector<T>& v) {
@@ -338,13 +298,6 @@ int main() {
 		double T = 1.0;
 	std::cout.precision(16);	
 
-		// Original test parameters (commented out for comparison with americanput.cpp)
-		// S0 = 50;
-		// K = 50;
-		// r = 0.08;
-		// q = 0.00;
-		// sigma = 0.4;
-		// T = 1.0;
 
 		Gbm sde{sigma, r-q};
 		vanilla_american_put american_derivative{K, T};
@@ -390,3 +343,4 @@ int main() {
 	
 	std::cout.precision(std::numeric_limits<long double>::max_digits10);	
 }
+

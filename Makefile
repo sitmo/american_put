@@ -5,8 +5,8 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O3 -march=native
 
 TARGET2 = test_fast_put
 SOURCE2 = test_fast_put.cpp
-TARGET3 = americanput_tree
-SOURCE3 = americanput_tree.cpp
+TARGET3 = reference_tree_put
+SOURCE3 = reference_tree_put.cpp
 
 all:  $(TARGET2) $(TARGET3)
 
