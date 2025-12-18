@@ -37,11 +37,23 @@
 *.out
 *.app
 
+# Project-specific executables (no extension)
+# Match executables without extensions
+test_fast_put
+test_table2
+test_table3
+test_ref33_table2
+test_ref33_table3
+reference_tree_put
+americanput
+americanput_tree
+table2
+table3
+ref33_table2
+ref33_table3
+
 # debug information files
 *.dwo
 
 .vscode
 *.pdf
-
-americanput
-americanput_tree
