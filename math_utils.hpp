@@ -28,7 +28,6 @@ static inline Real normal_pdf(Real x) {
 
 template <typename Real>
 static inline Real normal_cdf(Real x) {
-    // keep std::erf as requested
     return Real(0.5) + Real(0.5) * std::erf(x * Real(sqrt2inv));
 }
 

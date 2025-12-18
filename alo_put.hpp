@@ -101,8 +101,7 @@ public:
         const uint32_t max_iter = 5;
 
         for (size_t i = 0; i < NC; ++i) {
-            Put<Real> p = {S, K, sigma, r, q, tv[i]};
-            Bv[i] = gbm_american_put_oeb_qd_plus<Real>(p, tol, max_iter);
+            Bv[i] = compute_initial_early_exercise_boundary(K, sigma, r, q, tv[i], tol, max_iter);
         }
         if (q == Real(0)) Bv[NC - 1] = K;
         else Bv[NC - 1] = K * std::min(Real(1), r / q);
@@ -229,10 +228,7 @@ public:
         initH();
         initChebyshevInterpolation();
 
-        Put<Real> put = {S, K, sigma, r, q, T};
-        Put_1<Real> p1(put);
-        Put_1_1<Real> p2(put, p1);
-        Real veur = bs_european_put_price(put, p1, p2);
+        Real veur = compute_european_put_price(S, K, sigma, r, q, T);
 
         for (int ww = 0; ww < m; ++ww) {
             for (size_t i = 0; i + 1 < NC; ++i) {
@@ -267,7 +263,7 @@ public:
             << "\t\"q\": " << q << ",\n"
             << "\t\"time_ms\": " << fp_ms.count() << ",\n";
 
-        std::cout.precision(12);
+        std::cout.precision(8);
         std::cout << std::scientific;
         std::cout
             << "\t\"european_put\": " << veur << ",\n"

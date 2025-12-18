@@ -27,7 +27,7 @@
 /// @return Pair of (node_location, weight)
 template<typename Real>
 inline std::pair<Real, Real> compute_tanh_sinh_node_and_weight(Real step_size, Real transformed_index) {
-    const Real half_pi = Real(1.570796326794896619231L);
+    const Real half_pi = Real(HALF_PI);
     Real z = half_pi * std::sinh(transformed_index);
     Real cosh_z = std::cosh(z);
 

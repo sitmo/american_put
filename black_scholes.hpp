@@ -14,55 +14,68 @@
 #include "math_utils.hpp"
 #include <cmath>
 
-// -------------------------------
-// Black-Scholes building blocks
-// -------------------------------
+// -----------------------------------------------------------------------------
+// Black-Scholes European Put Option Pricing
+// -----------------------------------------------------------------------------
+
+/// Computes the price of a European put option using the Black-Scholes formula
+/// @param S Current stock price
+/// @param K Strike price
+/// @param sigma Volatility
+/// @param r Risk-free rate
+/// @param q Dividend yield
+/// @param t Time to expiration
+/// @return European put option price
 template <typename Real>
-struct Put {
-    Real S, K, sigma, r, q, t;
-};
-
-template <typename Real>
-struct Put_1 {
-    Real e_rt, e_qt, sqrt_t, sigma_sqrt_t;
-
-    Put_1(Put<Real>& p) { operator()(p); }
-
-    void operator()(Put<Real>& p) {
-        sqrt_t = std::sqrt(p.t);
-        sigma_sqrt_t = p.sigma * sqrt_t;
-        e_rt = std::exp(-p.r * p.t);
-        e_qt = std::exp(-p.q * p.t);
+inline Real compute_european_put_price(Real S, Real K, Real sigma, Real r, Real q, Real t) {
+    if (t <= Real(0)) {
+        return std::max(Real(0), K - S);
     }
-};
 
+    const Real sqrt_t = std::sqrt(t);
+    const Real sigma_sqrt_t = sigma * sqrt_t;
+    const Real d1 = (std::log(S / K) + (r - q + Real(0.5) * sigma * sigma) * t) / sigma_sqrt_t;
+    const Real d2 = d1 - sigma_sqrt_t;
+    
+    const Real N_d1 = normal_cdf(-d1);
+    const Real N_d2 = normal_cdf(-d2);
+    const Real e_rt = std::exp(-r * t);
+    const Real e_qt = std::exp(-q * t);
+    
+    return N_d2 * K * e_rt - N_d1 * S * e_qt;
+}
+
+/// Computes the price and theta (time derivative) of a European put option
+/// @param S Current stock price
+/// @param K Strike price
+/// @param sigma Volatility
+/// @param r Risk-free rate
+/// @param q Dividend yield
+/// @param t Time to expiration
+/// @param[out] price European put option price
+/// @param[out] theta Time derivative of the option price (dP/dt)
 template <typename Real>
-struct Put_1_1 {
-    Real d1, d2, ncdf_d1, ncdf_d2;
-
-    Put_1_1() {}
-    Put_1_1(Put<Real>& p, Put_1<Real>& p1) { operator()(p, p1); }
-
-    void operator()(Put<Real>& p, Put_1<Real>& p1) {
-        d1 = (std::log(p.S / p.K) + (p.r - p.q + Real(0.5) * p.sigma * p.sigma) * p.t) / p1.sigma_sqrt_t;
-        d2 = d1 - p1.sigma_sqrt_t;
-        ncdf_d1 = normal_cdf(-d1);
-        ncdf_d2 = normal_cdf(-d2);
+inline void compute_european_put_price_and_theta(Real S, Real K, Real sigma, Real r, Real q, Real t,
+                                                 Real& price, Real& theta) {
+    if (t <= Real(0)) {
+        price = std::max(Real(0), K - S);
+        theta = Real(0);
+        return;
     }
-};
 
-template <typename Real>
-static inline void bs_european_put_price_theta(Put<Real>& p, Put_1<Real>& p1, Put_1_1<Real>& p2,
-                                              Real& price, Real& theta) {
-    Real term1 = p2.ncdf_d2 * p.K * p1.e_rt;
-    Real term2 = p2.ncdf_d1 * p.S * p1.e_qt;
+    const Real sqrt_t = std::sqrt(t);
+    const Real sigma_sqrt_t = sigma * sqrt_t;
+    const Real d1 = (std::log(S / K) + (r - q + Real(0.5) * sigma * sigma) * t) / sigma_sqrt_t;
+    const Real d2 = d1 - sigma_sqrt_t;
+    
+    const Real N_d1 = normal_cdf(-d1);
+    const Real N_d2 = normal_cdf(-d2);
+    const Real e_rt = std::exp(-r * t);
+    const Real e_qt = std::exp(-q * t);
+    
+    const Real term1 = N_d2 * K * e_rt;
+    const Real term2 = N_d1 * S * e_qt;
+    
     price = term1 - term2;
-    theta = p.r * term1 - p.q * term2
-          - p.sigma * p.S / (Real(2) * p1.sqrt_t) * p1.e_qt * normal_pdf(p2.d1);
+    theta = r * term1 - q * term2 - sigma * S / (Real(2) * sqrt_t) * e_qt * normal_pdf(d1);
 }
-
-template <typename Real>
-static inline Real bs_european_put_price(Put<Real>& p, Put_1<Real>& p1, Put_1_1<Real>& p2) {
-    return p2.ncdf_d2 * p.K * p1.e_rt - p2.ncdf_d1 * p.S * p1.e_qt;
-}
-
