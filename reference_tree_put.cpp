@@ -1,24 +1,3 @@
-/*
-TRAIT:
-A traits class is class that is usually intended to be a meta-function associating 
-types to other types or to constant values to provide a characterization of those types. 
-
-POLICY:
-A policy is normally meant to be a class that specifies what the behavior of another, 
-generic class should be regarding certain operations that could be potentially 
-realized in several different ways (and whose implementation is, therefore, left up 
-to the policy class).
-
-
-policies are passed as template parameters, while traits are global classes
-*/
-
-// todo: parallel threads, cuda
-// grid trunctation 
-// grid extension (for delta, gamma, theta)
-// front fixing with BS control variate
-// control variate in general
-
 #include <iostream>
 #include <cmath>
 #include <vector>
